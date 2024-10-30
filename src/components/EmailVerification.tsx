@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 
@@ -7,6 +7,45 @@ export default function EmailVerification() {
   const [message, setMessage] = useState('');
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+
+  // Fungsi untuk mengecek status verifikasi email
+  const checkEmailVerification = async () => {
+    try {
+      const response = await fetch('http://localhost:3001/api/auth/check-verification', {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        },
+        credentials: 'include'
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.user.email_verified) {
+          navigate('/');
+        }
+      }
+    } catch (error) {
+      console.error('Error checking verification status:', error);
+    }
+  };
+
+  useEffect(() => {
+    // Debug log
+    console.log('Current user state:', user);
+    
+    // Redirect ke dashboard jika email sudah terverifikasi
+    if (user && user.email_verified === true) {
+      console.log('Email verified, redirecting to dashboard');
+      navigate('/');
+      return;
+    }
+
+    // Set interval untuk mengecek status verifikasi setiap 10 detik
+    const intervalId = setInterval(checkEmailVerification, 10000);
+
+    // Cleanup interval ketika component unmount
+    return () => clearInterval(intervalId);
+  }, [user, navigate]);
 
   const handleResendVerification = async () => {
     setIsLoading(true);
@@ -47,6 +86,9 @@ export default function EmailVerification() {
           </h2>
           <p className="mt-2 text-center text-sm text-gray-400">
             Please verify your email address to access the dashboard
+          </p>
+          <p className="mt-2 text-center text-xs text-gray-500">
+            Checking verification status every 10 seconds...
           </p>
         </div>
 
