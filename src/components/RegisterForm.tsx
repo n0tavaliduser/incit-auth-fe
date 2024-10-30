@@ -8,19 +8,38 @@ export function RegisterForm({ onSuccess }: RegisterFormProps) {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   const { register, loginWithGoogle, loginWithFacebook } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isLoading) return;
+
     if (password !== confirmPassword) {
       setError('Passwords do not match');
       return;
     }
+
+    setIsLoading(true);
     try {
       await register(name, email, password);
       onSuccess?.();
     } catch (err) {
       setError('Registration failed. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSocialLogin = async (socialLogin: () => Promise<void>) => {
+    if (isLoading) return;
+    setIsLoading(true);
+    try {
+      await socialLogin();
+    } catch (err) {
+      setError('Social login failed. Please try again.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -113,17 +132,26 @@ export function RegisterForm({ onSuccess }: RegisterFormProps) {
           <div className="space-y-4">
             <button
               type="submit"
-              className="group relative w-full flex justify-center py-3 px-4 border border-transparent 
-              text-sm font-medium rounded-lg text-white bg-gray-800 hover:bg-gray-700 
+              disabled={isLoading}
+              className={`group relative w-full flex justify-center py-3 px-4 border border-transparent 
+              text-sm font-medium rounded-lg text-white bg-gray-800 
+              ${isLoading ? 'opacity-75 cursor-not-allowed' : 'hover:bg-gray-700'} 
               focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 
-              transition-all duration-200 ease-in-out"
+              transition-all duration-200 ease-in-out`}
             >
               <span className="absolute left-0 inset-y-0 flex items-center pl-3">
-                <svg className="h-5 w-5 text-gray-600 group-hover:text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                  <path d="M8 9a3 3 0 100-6 3 3 0 000 6zM8 11a6 6 0 016 6H2a6 6 0 016-6zM16 7a1 1 0 10-2 0v1h-1a1 1 0 100 2h1v1a1 1 0 102 0v-1h1a1 1 0 100-2h-1V7z" />
-                </svg>
+                {isLoading ? (
+                  <svg className="animate-spin h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                ) : (
+                  <svg className="h-5 w-5 text-gray-600 group-hover:text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                    <path d="M8 9a3 3 0 100-6 3 3 0 000 6zM8 11a6 6 0 016 6H2a6 6 0 016-6zM16 7a1 1 0 10-2 0v1h-1a1 1 0 100 2h1v1a1 1 0 102 0v-1h1a1 1 0 100-2h-1V7z" />
+                  </svg>
+                )}
               </span>
-              Sign up
+              {isLoading ? 'Creating account...' : 'Sign up'}
             </button>
 
             <div className="relative">
@@ -137,34 +165,38 @@ export function RegisterForm({ onSuccess }: RegisterFormProps) {
 
             <button
               type="button"
-              onClick={loginWithGoogle}
-              className="group relative w-full flex justify-center py-3 px-4 border border-gray-700 
-              text-sm font-medium rounded-lg text-gray-300 bg-transparent hover:bg-gray-800 
+              disabled={isLoading}
+              onClick={() => handleSocialLogin(loginWithGoogle)}
+              className={`group relative w-full flex justify-center py-3 px-4 border border-gray-700 
+              text-sm font-medium rounded-lg text-gray-300 bg-transparent 
+              ${isLoading ? 'opacity-75 cursor-not-allowed' : 'hover:bg-gray-800'} 
               focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 
-              transition-all duration-200 ease-in-out"
+              transition-all duration-200 ease-in-out`}
             >
               <span className="absolute left-0 inset-y-0 flex items-center pl-3">
                 <svg className="h-5 w-5 text-gray-600 group-hover:text-gray-400" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M12.545,10.239v3.821h5.445c-0.712,2.315-2.647,3.972-5.445,3.972c-3.332,0-6.033-2.701-6.033-6.032s2.701-6.032,6.033-6.032c1.498,0,2.866,0.549,3.921,1.453l2.814-2.814C17.503,2.988,15.139,2,12.545,2C7.021,2,2.543,6.477,2.543,12s4.478,10,10.002,10c8.396,0,10.249-7.85,9.426-11.748L12.545,10.239z"/>
                 </svg>
               </span>
-              Continue with Google
+              {isLoading ? 'Connecting...' : 'Continue with Google'}
             </button>
 
             <button
               type="button"
-              onClick={loginWithFacebook}
-              className="group relative w-full flex justify-center py-3 px-4 border border-gray-700 
-              text-sm font-medium rounded-lg text-gray-300 bg-transparent hover:bg-gray-800 
+              disabled={isLoading}
+              onClick={() => handleSocialLogin(loginWithFacebook)}
+              className={`group relative w-full flex justify-center py-3 px-4 border border-gray-700 
+              text-sm font-medium rounded-lg text-gray-300 bg-transparent 
+              ${isLoading ? 'opacity-75 cursor-not-allowed' : 'hover:bg-gray-800'} 
               focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 
-              transition-all duration-200 ease-in-out"
+              transition-all duration-200 ease-in-out`}
             >
               <span className="absolute left-0 inset-y-0 flex items-center pl-3">
                 <svg className="h-5 w-5 text-gray-600 group-hover:text-gray-400" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
                 </svg>
               </span>
-              Continue with Facebook
+              {isLoading ? 'Connecting...' : 'Continue with Facebook'}
             </button>
           </div>
         </form>
