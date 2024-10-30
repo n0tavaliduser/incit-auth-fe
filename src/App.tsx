@@ -3,6 +3,8 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import { LoginForm } from './components/LoginForm';
 import RegisterForm from './components/RegisterForm';
 import Dashboard from './components/Dashboard';
+import EmailVerification from './components/EmailVerification';
+import VerifyEmail from './components/VerifyEmail';
 import { useAuth } from './context/AuthContext';
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
@@ -51,6 +53,14 @@ function App() {
             <RegisterForm />
           </PublicRoute>
         } 
+      />
+      <Route
+        path="/verify-email/:token"
+        element={<VerifyEmail />}
+      />
+      <Route
+        path="/email-verification"
+        element={<EmailVerification />}
       />
       <Route
         path="/"

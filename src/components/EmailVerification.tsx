@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { useNavigate } from 'react-router-dom';
 
 export default function EmailVerification() {
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState('');
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
 
   const handleResendVerification = async () => {
     setIsLoading(true);
@@ -27,6 +29,15 @@ export default function EmailVerification() {
     }
   };
 
+  const handleLogout = async () => {
+    try {
+      await logout();
+      navigate('/login');
+    } catch (error) {
+      setMessage('Failed to logout. Please try again.');
+    }
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 via-gray-800 to-black">
       <div className="max-w-md w-full space-y-8 bg-white/10 backdrop-blur-lg p-8 rounded-2xl shadow-2xl">
@@ -45,17 +56,30 @@ export default function EmailVerification() {
           </div>
         )}
 
-        <button
-          onClick={handleResendVerification}
-          disabled={isLoading}
-          className={`w-full flex justify-center py-3 px-4 border border-transparent 
-          text-sm font-medium rounded-lg text-white bg-gray-800 
-          ${isLoading ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-700'} 
-          focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 
-          transition-all duration-200 ease-in-out`}
-        >
-          {isLoading ? 'Sending...' : 'Resend Verification Email'}
-        </button>
+        <div className="space-y-4">
+          <button
+            onClick={handleResendVerification}
+            disabled={isLoading}
+            className={`w-full flex justify-center py-3 px-4 border border-transparent 
+            text-sm font-medium rounded-lg text-white bg-gray-800 
+            ${isLoading ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-700'} 
+            focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 
+            transition-all duration-200 ease-in-out`}
+          >
+            {isLoading ? 'Sending...' : 'Resend Verification Email'}
+          </button>
+
+          <button
+            onClick={handleLogout}
+            className="w-full flex justify-center py-3 px-4 border border-red-600 
+            text-sm font-medium rounded-lg text-red-500 bg-transparent 
+            hover:bg-red-600 hover:text-white
+            focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 
+            transition-all duration-200 ease-in-out"
+          >
+            Logout
+          </button>
+        </div>
       </div>
     </div>
   );
