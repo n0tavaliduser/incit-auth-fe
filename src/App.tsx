@@ -1,7 +1,7 @@
 import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { LoginForm } from './components/LoginForm';
-import { RegisterForm } from './components/RegisterForm';
+import RegisterForm from './components/RegisterForm';
 import Dashboard from './components/Dashboard';
 import { useAuth } from './context/AuthContext';
 
