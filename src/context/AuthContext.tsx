@@ -27,6 +27,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
+  const register = useCallback(async (name: string, email: string, password: string) => {
+    setIsLoading(true);
+    try {
+      const response = await fetch('http://localhost:3001/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ name, email, password }),
+      });
+
+      if (!response.ok) throw new Error('Registration failed');
+
+      const userData = await response.json();
+      setUser(userData.user);
+      return userData;
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
   const loginWithGoogle = useCallback(async () => {
     window.location.href = 'http://localhost:3001/api/auth/google';
   }, []);
@@ -49,7 +69,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, isLoading, login, loginWithGoogle, loginWithFacebook, logout }}>
+    <AuthContext.Provider value={{ 
+      user, 
+      isLoading, 
+      login, 
+      register,
+      loginWithGoogle, 
+      loginWithFacebook, 
+      logout 
+    }}>
       {children}
     </AuthContext.Provider>
   );

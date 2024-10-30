@@ -1,6 +1,7 @@
 import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { LoginForm } from './components/LoginForm';
+import { RegisterForm } from './components/RegisterForm';
 import { useAuth } from './context/AuthContext';
 
 interface PrivateRouteProps {
@@ -38,6 +39,7 @@ function App() {
     <div className="min-h-screen bg-gray-100">
       <Routes>
         <Route path="/login" element={<LoginForm />} />
+        <Route path="/register" element={<RegisterForm />} />
         <Route
           path="/"
           element={

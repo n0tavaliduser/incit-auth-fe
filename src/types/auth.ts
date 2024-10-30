@@ -9,6 +9,7 @@ export interface AuthContextType {
   user: User | null;
   isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
+  register: (name: string, email: string, password: string) => Promise<void>;
   loginWithGoogle: () => Promise<void>;
   loginWithFacebook: () => Promise<void>;
   logout: () => Promise<void>;
@@ -20,4 +21,8 @@ export interface LoginFormProps {
 
 export interface PrivateRouteProps {
   children: React.ReactNode;
+}
+
+export interface RegisterFormProps {
+  onSuccess?: () => void;
 } 
