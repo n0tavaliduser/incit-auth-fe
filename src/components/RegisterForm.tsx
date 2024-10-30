@@ -43,10 +43,14 @@ export default function RegisterForm({ onSuccess }: RegisterFormProps) {
 
     setIsLoading(true);
     try {
-      await register(name, email, password);
-      navigate('/');
+      const response = await register(name, email, password);
+      if (response?.token) {
+        localStorage.setItem('token', response.token);
+        navigate('/');
+      }
     } catch (err) {
-      setError('Registration failed. Please try again.');
+      console.error('Registration error:', err);
+      setError(err instanceof Error ? err.message : 'Registration failed. Please try again.');
     } finally {
       setIsLoading(false);
     }

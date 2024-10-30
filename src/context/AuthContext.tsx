@@ -1,11 +1,11 @@
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
-import { User, AuthContextType, LoginResponse } from '../types/auth';
+import { User, AuthContextType, LoginResponse, RegisterResponse } from '../types/auth';
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
 
   const checkAuth = useCallback(async () => {
@@ -43,7 +43,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     checkAuth();
   }, [checkAuth]);
 
-  const register = useCallback(async (name: string, email: string, password: string) => {
+  const register = useCallback(async (name: string, email: string, password: string): Promise<RegisterResponse> => {
     setIsLoading(true);
     try {
       const response = await fetch('http://localhost:3001/api/auth/register', {
@@ -53,14 +53,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         body: JSON.stringify({ name, email, password }),
       });
 
-      if (!response.ok) throw new Error('Registration failed');
-
       const data = await response.json();
-      setUser(data.user);
-      if (data.token) {
-        localStorage.setItem('token', data.token);
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Registration failed');
       }
+
+      setUser(data.user);
       return data;
+    } catch (error) {
+      console.error('Registration error:', error);
+      if (error instanceof Error) {
+        throw error;
+      }
+      throw new Error('An unexpected error occurred during registration');
     } finally {
       setIsLoading(false);
     }
@@ -69,32 +75,62 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const login = useCallback(async (email: string, password: string): Promise<LoginResponse> => {
     setIsLoading(true);
     try {
-      const response = await fetch('http://localhost:3001/api/auth/login', {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
+
+      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:3001'}/api/auth/login`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+        },
         credentials: 'include',
         body: JSON.stringify({ email, password }),
+        signal: controller.signal
       });
 
-      if (!response.ok) throw new Error('Login failed');
+      clearTimeout(timeoutId);
 
       const data = await response.json();
-      setUser(data.user);
-      if (data.token) {
-        localStorage.setItem('token', data.token);
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Login failed');
       }
+
+      setUser(data.user);
       return data;
+    } catch (error) {
+      console.error('Login error:', error);
+      if (error instanceof Error) {
+        if (error.name === 'AbortError') {
+          throw new Error('Login request timed out. Please try again.');
+        }
+        if (error instanceof TypeError && error.message.includes('NetworkError')) {
+          throw new Error('Unable to connect to server. Please check your internet connection.');
+        }
+        throw error;
+      }
+      throw new Error('An unexpected error occurred during login');
     } finally {
       setIsLoading(false);
     }
   }, []);
 
   const loginWithGoogle = useCallback(async () => {
-    window.location.href = 'http://localhost:3001/api/auth/google';
+    try {
+      window.location.href = `${process.env.REACT_APP_API_URL || 'http://localhost:3001'}/api/auth/google`;
+    } catch (error) {
+      console.error('Google login error:', error);
+      throw new Error('Failed to initialize Google login');
+    }
   }, []);
 
   const loginWithFacebook = useCallback(async () => {
-    window.location.href = 'http://localhost:3001/api/auth/facebook';
+    try {
+      window.location.href = `${process.env.REACT_APP_API_URL || 'http://localhost:3001'}/api/auth/facebook`;
+    } catch (error) {
+      console.error('Facebook login error:', error);
+      throw new Error('Failed to initialize Facebook login');
+    }
   }, []);
 
   const logout = useCallback(async () => {

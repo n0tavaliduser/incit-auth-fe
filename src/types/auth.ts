@@ -2,17 +2,19 @@ export interface User {
   id: number;
   email: string;
   name: string;
+  email_verified: boolean;
   oauth_provider?: string;
 }
 
 export interface LoginResponse {
-  user: User;
   token: string;
+  user: User;
 }
 
 export interface RegisterResponse {
-  user: User;
   token: string;
+  user: User;
+  message: string;
 }
 
 export interface AuthContextType {
