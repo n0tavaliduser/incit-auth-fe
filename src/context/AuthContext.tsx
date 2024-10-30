@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import { User, AuthContextType, LoginResponse, RegisterResponse } from '../types/auth';
+import { useNavigate } from 'react-router-dom';
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
@@ -7,6 +8,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
+  const navigate = useNavigate();
 
   const checkAuth = useCallback(async () => {
     const token = localStorage.getItem('token');
@@ -27,6 +29,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (response.ok) {
         const data = await response.json();
         setUser(data.user);
+        
+        if (data.user && !data.user.email_verified && window.location.pathname !== '/email-verification') {
+          navigate('/email-verification');
+        }
       } else {
         localStorage.removeItem('token');
       }
@@ -37,7 +43,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setIsLoading(false);
       setIsInitialized(true);
     }
-  }, []);
+  }, [navigate]);
 
   useEffect(() => {
     checkAuth();
@@ -76,9 +82,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setIsLoading(true);
     try {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
+      const timeoutId = setTimeout(() => controller.abort(), 10000);
 
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:3001'}/api/auth/login`, {
+      const response = await fetch('http://localhost:3001/api/auth/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -89,31 +95,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       });
 
       clearTimeout(timeoutId);
-
       const data = await response.json();
 
       if (!response.ok) {
         throw new Error(data.message || 'Login failed');
       }
 
+      localStorage.setItem('token', data.token);
       setUser(data.user);
+
+      if (!data.user.email_verified) {
+        navigate('/email-verification');
+      }
+
       return data;
     } catch (error) {
       console.error('Login error:', error);
       if (error instanceof Error) {
-        if (error.name === 'AbortError') {
-          throw new Error('Login request timed out. Please try again.');
-        }
-        if (error instanceof TypeError && error.message.includes('NetworkError')) {
-          throw new Error('Unable to connect to server. Please check your internet connection.');
-        }
         throw error;
       }
       throw new Error('An unexpected error occurred during login');
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [navigate]);
 
   const loginWithGoogle = useCallback(async () => {
     try {
