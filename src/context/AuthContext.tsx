@@ -103,9 +103,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       await fetch('http://localhost:3001/api/auth/logout', {
         method: 'POST',
         credentials: 'include',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
       });
       setUser(null);
       localStorage.removeItem('token');
+    } catch (error) {
+      console.error('Logout error:', error);
     } finally {
       setIsLoading(false);
     }
