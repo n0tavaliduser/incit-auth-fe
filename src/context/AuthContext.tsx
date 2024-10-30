@@ -31,6 +31,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     window.location.href = 'http://localhost:3001/api/auth/google';
   }, []);
 
+  const loginWithFacebook = useCallback(async () => {
+    window.location.href = 'http://localhost:3001/api/auth/facebook';
+  }, []);
+
   const logout = useCallback(async () => {
     setIsLoading(true);
     try {
@@ -45,7 +49,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, isLoading, login, loginWithGoogle, logout }}>
+    <AuthContext.Provider value={{ user, isLoading, login, loginWithGoogle, loginWithFacebook, logout }}>
       {children}
     </AuthContext.Provider>
   );
