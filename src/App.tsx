@@ -18,7 +18,15 @@ function PrivateRoute({ children }: { children: React.ReactNode }) {
     );
   }
 
-  return user ? <>{children}</> : <Navigate to="/login" replace />;
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
+
+  if (!user.email_verified) {
+    return <Navigate to="/email-verification" replace />;
+  }
+
+  return <>{children}</>;
 }
 
 function PublicRoute({ children }: { children: React.ReactNode }) {
@@ -32,7 +40,15 @@ function PublicRoute({ children }: { children: React.ReactNode }) {
     );
   }
 
-  return user ? <Navigate to="/" replace /> : <>{children}</>;
+  if (user?.email_verified) {
+    return <Navigate to="/" replace />;
+  }
+
+  if (user && !user.email_verified) {
+    return <Navigate to="/email-verification" replace />;
+  }
+
+  return <>{children}</>;
 }
 
 function App() {
