@@ -1,11 +1,47 @@
-import React, { createContext, useContext, useState, useCallback } from 'react';
+import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import { User, AuthContextType, LoginResponse } from '../types/auth';
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isInitialized, setIsInitialized] = useState(false);
+
+  const checkAuth = useCallback(async () => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      setIsLoading(false);
+      setIsInitialized(true);
+      return;
+    }
+
+    try {
+      const response = await fetch('http://localhost:3001/api/auth/verify', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+        credentials: 'include'
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setUser(data.user);
+      } else {
+        localStorage.removeItem('token');
+      }
+    } catch (error) {
+      console.error('Auth check failed:', error);
+      localStorage.removeItem('token');
+    } finally {
+      setIsLoading(false);
+      setIsInitialized(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    checkAuth();
+  }, [checkAuth]);
 
   const register = useCallback(async (name: string, email: string, password: string) => {
     setIsLoading(true);
@@ -74,6 +110,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setIsLoading(false);
     }
   }, []);
+
+  if (!isInitialized) {
+    return <div>Loading...</div>;
+  }
 
   return (
     <AuthContext.Provider value={{ 
