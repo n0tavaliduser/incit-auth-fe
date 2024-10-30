@@ -154,7 +154,7 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
         <div className="mt-6">
           <p className="text-center text-sm text-gray-400">
             Don't have an account?{' '}
-            <a href="#" className="font-medium text-gray-400 hover:text-white">
+            <a href="/register" className="font-medium text-gray-400 hover:text-white">
               Sign up now
             </a>
           </p>
