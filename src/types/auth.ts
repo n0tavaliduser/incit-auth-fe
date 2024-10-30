@@ -5,11 +5,21 @@ export interface User {
   oauth_provider?: string;
 }
 
+export interface LoginResponse {
+  user: User;
+  token: string;
+}
+
+export interface RegisterResponse {
+  user: User;
+  token: string;
+}
+
 export interface AuthContextType {
   user: User | null;
   isLoading: boolean;
-  login: (email: string, password: string) => Promise<void>;
-  register: (name: string, email: string, password: string) => Promise<void>;
+  register: (name: string, email: string, password: string) => Promise<RegisterResponse>;
+  login: (email: string, password: string) => Promise<LoginResponse>;
   loginWithGoogle: () => Promise<void>;
   loginWithFacebook: () => Promise<void>;
   logout: () => Promise<void>;
@@ -17,10 +27,6 @@ export interface AuthContextType {
 
 export interface LoginFormProps {
   onSuccess?: () => void;
-}
-
-export interface PrivateRouteProps {
-  children: React.ReactNode;
 }
 
 export interface RegisterFormProps {

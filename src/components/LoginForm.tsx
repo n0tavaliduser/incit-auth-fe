@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { useNavigate } from 'react-router-dom';
 import { LoginFormProps } from '../types/auth';
 
 export function LoginForm({ onSuccess }: LoginFormProps) {
@@ -9,6 +10,7 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const { login, loginWithGoogle, loginWithFacebook } = useAuth();
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (error) {
@@ -21,12 +23,15 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (isLoading) return; // Prevent multiple submissions
+    if (isLoading) return;
     
     setIsLoading(true);
     try {
-      await login(email, password);
-      onSuccess?.();
+      const response = await login(email, password);
+      if (response?.token) {
+        localStorage.setItem('token', response.token);
+        navigate('/');
+      }
     } catch (err) {
       setError('Login failed. Please check your credentials.');
     } finally {
@@ -39,6 +44,7 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
     setIsLoading(true);
     try {
       await socialLogin();
+      navigate('/');
     } catch (err) {
       setError('Social login failed. Please try again.');
     } finally {
