@@ -165,11 +165,10 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="appearance-none relative block w-full px-3 py-2 
-                border border-gray-700 rounded-lg bg-gray-800 text-white 
-                placeholder-gray-400 focus:outline-none focus:ring-2 
-                focus:ring-purple-500/50 focus:border-purple-500/50 
-                focus:z-10 sm:text-sm transition-all duration-200"
+                className="appearance-none relative block w-full px-3 py-3 border border-gray-700 
+                placeholder-gray-500 text-white rounded-lg bg-gray-800/50 
+                focus:outline-none focus:ring-2 focus:ring-gray-600 focus:border-transparent
+                focus:z-10 sm:text-sm"
                 placeholder="Email address"
               />
             </div>
@@ -259,7 +258,7 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
                   </svg>
                 )}
               </span>
-              {isLoading ? 'Signing in...' : 'Sign in'}
+              {isLoading ? 'Signing in...' : <span className='font-'>Sign in</span>}
             </button>
 
             <div className="relative">
