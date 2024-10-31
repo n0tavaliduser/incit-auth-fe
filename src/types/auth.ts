@@ -1,12 +1,13 @@
 export interface User {
   id: number;
-  email: string;
   name: string;
+  email: string;
+  picture?: string;
   email_verified: boolean;
-  oauth_provider?: string;
+  provider?: string;
 }
 
-export interface LoginResponse {
+export interface AuthResponse {
   token: string;
   user: User;
 }
@@ -21,7 +22,7 @@ export interface AuthContextType {
   user: User | null;
   isLoading: boolean;
   register: (name: string, email: string, password: string) => Promise<RegisterResponse>;
-  login: (email: string, password: string) => Promise<LoginResponse>;
+  login: (email: string, password: string) => Promise<AuthResponse>;
   loginWithGoogle: () => Promise<any>;
   loginWithFacebook: () => Promise<any>;
   logout: () => Promise<void>;

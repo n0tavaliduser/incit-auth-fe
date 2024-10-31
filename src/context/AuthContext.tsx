@@ -1,22 +1,13 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import axios from 'axios';
+import { User, AuthResponse } from '../types/auth';
 
 interface AuthContextType {
   isAuthenticated: boolean;
-  user: any;
-  login: (token: string) => void;
+  user: User | null;
+  login: (data: AuthResponse) => void;
   logout: () => void;
-  loginWithCredentials: (email: string, password: string) => Promise<ApiResponse>;
   loginWithGoogle: () => Promise<void>;
-  loginWithFacebook: (token: string) => Promise<void>;
-  register: (name: string, email: string, password: string) => Promise<ApiResponse>;
-}
-
-interface ApiResponse {
-  valid?: boolean;
-  user?: any;
-  token?: string;
-  error?: string;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -31,7 +22,7 @@ export const useAuth = () => {
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -42,12 +33,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const validateToken = async (token: string) => {
     try {
-      const response = await axios.get<ApiResponse>(`${import.meta.env.VITE_API_URL}/auth/validate`, {
+      const response = await axios.get<AuthResponse>(`${import.meta.env.VITE_API_URL}/auth/validate`, {
         headers: {
           Authorization: `Bearer ${token}`
         }
       });
-      if (response.data.valid) {
+      if (response.data.token) {
         setIsAuthenticated(true);
         setUser(response.data.user);
       } else {
@@ -58,25 +49,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const loginWithCredentials = async (email: string, password: string): Promise<ApiResponse> => {
-    try {
-      const response = await axios.post<ApiResponse>(`${import.meta.env.VITE_API_URL}/auth/login`, {
-        email,
-        password
-      });
-      if (response.data.token) {
-        login(response.data.token);
-        setUser(response.data.user);
-      }
-      return response.data;
-    } catch (error) {
-      throw error;
-    }
-  };
-
-  const login = (token: string) => {
-    localStorage.setItem('token', token);
+  const login = (data: AuthResponse) => {
+    localStorage.setItem('token', data.token);
     setIsAuthenticated(true);
+    setUser(data.user);
   };
 
   const loginWithGoogle = async () => {
@@ -92,14 +68,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         callback: async (response: any) => {
           if (response.access_token) {
             try {
-              const userResponse = await axios.post<ApiResponse>(
+              const userResponse = await axios.post<AuthResponse>(
                 `${import.meta.env.VITE_API_URL}/auth/google`,
                 { token: response.access_token }
               );
               
               if (userResponse.data.token) {
-                login(userResponse.data.token);
-                setUser(userResponse.data.user);
+                login(userResponse.data);
               }
             } catch (error) {
               console.error('Google login error:', error);
@@ -116,41 +91,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const loginWithFacebook = async (token: string) => {
-    try {
-      const response = await axios.post<ApiResponse>(`${import.meta.env.VITE_API_URL}/auth/facebook`, {
-        token
-      });
-      if (response.data.token) {
-        login(response.data.token);
-        setUser(response.data.user);
-      }
-    } catch (error) {
-      throw error;
-    }
-  };
-
   const logout = () => {
     localStorage.removeItem('token');
     setIsAuthenticated(false);
     setUser(null);
-  };
-
-  const register = async (name: string, email: string, password: string): Promise<ApiResponse> => {
-    try {
-      const response = await axios.post<ApiResponse>(`${import.meta.env.VITE_API_URL}/auth/register`, {
-        name,
-        email,
-        password
-      });
-      if (response.data.token) {
-        login(response.data.token);
-        setUser(response.data.user);
-      }
-      return response.data;
-    } catch (error) {
-      throw error;
-    }
   };
 
   return (
@@ -159,10 +103,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       user, 
       login, 
       logout,
-      loginWithCredentials,
-      loginWithGoogle,
-      loginWithFacebook,
-      register
+      loginWithGoogle
     }}>
       {children}
     </AuthContext.Provider>

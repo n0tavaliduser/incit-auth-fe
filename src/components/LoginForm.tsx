@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { LoginFormProps } from '../types/auth';
+import api from '../utils/api';
+import { AuthResponse } from '../types/auth';
 
-type SocialLoginFunction = (token: string) => Promise<void>;
+interface LoginFormProps {
+  onSuccess?: () => void;
+}
 
 export function LoginForm({ onSuccess }: LoginFormProps) {
   const [email, setEmail] = useState('');
@@ -11,20 +14,30 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const { loginWithCredentials, loginWithGoogle, loginWithFacebook } = useAuth();
+  const { login, loginWithGoogle } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
-    let timer: NodeJS.Timeout;
-    if (error) {
-      timer = setTimeout(() => {
-        setError('');
-      }, 3000);
-    }
-    return () => {
-      if (timer) clearTimeout(timer);
+    // Initialize Facebook SDK
+    window.fbAsyncInit = function() {
+      window.FB?.init({
+        appId: import.meta.env.VITE_FACEBOOK_APP_ID,
+        cookie: true,
+        xfbml: true,
+        version: 'v18.0'
+      });
     };
-  }, [error]);
+
+    // Load Facebook SDK
+    (function(d, s, id) {
+      var js, fjs = d.getElementsByTagName(s)[0];
+      if (d.getElementById(id)) return;
+      js = d.createElement(s) as HTMLScriptElement;
+      js.id = id;
+      js.src = "https://connect.facebook.net/en_US/sdk.js";
+      fjs.parentNode?.insertBefore(js, fjs);
+    }(document, 'script', 'facebook-jssdk'));
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -34,33 +47,74 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
       setIsLoading(true);
       setError('');
       
-      const response = await loginWithCredentials(email, password);
-      if (response?.token) {
+      const response = await api.post<AuthResponse>('/auth/login', {
+        email,
+        password
+      });
+      
+      if (response.data.token) {
+        login(response.data);  // Pass the entire response
         navigate('/');
       }
     } catch (err) {
       console.error('Login error:', err);
-      if (err instanceof Error) {
-        setError(err.message);
-      } else {
-        setError('Unable to connect to server. Please try again later.');
-      }
+      setError('Invalid email or password');
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleSocialLogin = async (socialLoginFn: SocialLoginFunction) => {
+  const handleSocialLogin = async (socialLoginFn: () => Promise<void>) => {
     if (isLoading) return;
     setIsLoading(true);
     try {
-      console.log('Initiating social login...');
-      await socialLoginFn(''); // Pass empty string as token since it will be handled by the provider
-      console.log('Social login successful');
+      await socialLoginFn();
       navigate('/');
     } catch (err) {
       console.error('Social login error:', err);
       setError('Social login failed. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleFacebookLogin = () => {
+    if (isLoading) return;
+    setIsLoading(true);
+    try {
+      if (!window.FB) {
+        throw new Error('Facebook SDK not loaded');
+      }
+
+      window.FB.login(function(response) {
+        if (response.authResponse) {
+          handleFacebookResponse(response.authResponse.accessToken);
+        } else {
+          setError('Facebook login cancelled');
+          setIsLoading(false);
+        }
+      }, { scope: 'email,public_profile' });
+
+    } catch (err) {
+      console.error('Facebook auth error:', err);
+      setError('Facebook login failed. Please try again.');
+      setIsLoading(false);
+    }
+  };
+
+  const handleFacebookResponse = async (accessToken: string) => {
+    try {
+      const authResponse = await api.post<AuthResponse>('/auth/facebook', {
+        token: accessToken
+      });
+      
+      if (authResponse.data.token) {
+        login(authResponse.data);  // Pass the entire response
+        navigate('/');
+      }
+    } catch (error) {
+      console.error('Facebook login error:', error);
+      setError('Facebook login failed. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -236,20 +290,11 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
 
             <button
               type="button"
+              onClick={handleFacebookLogin}
               disabled={isLoading}
-              onClick={() => handleSocialLogin(loginWithFacebook)}
-              className={`group relative w-full flex justify-center py-3 px-4 border border-gray-700 
-              text-sm font-medium rounded-lg text-gray-300 bg-transparent 
-              ${isLoading ? 'opacity-75 cursor-not-allowed' : 'hover:bg-gray-800'} 
-              focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 
-              transition-all duration-200 ease-in-out`}
+              className="w-full flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
             >
-              <span className="absolute left-0 inset-y-0 flex items-center pl-3">
-                <svg className="h-5 w-5 text-gray-600 group-hover:text-gray-400" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
-                </svg>
-              </span>
-              {isLoading ? 'Connecting...' : 'Continue with Facebook'}
+              Continue with Facebook
             </button>
           </div>
         </form>
