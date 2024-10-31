@@ -8,6 +8,7 @@ import RegisterForm from './components/RegisterForm';
 import VerifyEmail from './components/VerifyEmail';
 import EmailVerification from './components/EmailVerification';
 import Dashboard from './components/Dashboard';
+import Profile from './components/Profile';
 
 function App() {
   return (
@@ -43,6 +44,14 @@ function App() {
             element={
               <PrivateRoute>
                 <Dashboard />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/profile"
+            element={
+              <PrivateRoute>
+                <Profile />
               </PrivateRoute>
             }
           />
