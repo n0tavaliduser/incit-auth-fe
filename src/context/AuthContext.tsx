@@ -1,185 +1,170 @@
-import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
-import { User, AuthContextType, LoginResponse, RegisterResponse } from '../types/auth';
-import { useNavigate } from 'react-router-dom';
+import React, { createContext, useContext, useState, useEffect } from 'react';
+import axios from 'axios';
 
-const AuthContext = createContext<AuthContextType | null>(null);
-
-export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [isInitialized, setIsInitialized] = useState(false);
-  const navigate = useNavigate();
-
-  const checkAuth = useCallback(async () => {
-    const token = localStorage.getItem('token');
-    if (!token) {
-      setIsLoading(false);
-      setIsInitialized(true);
-      return;
-    }
-
-    try {
-      const response = await fetch('http://localhost:3001/api/auth/verify', {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-        credentials: 'include'
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setUser(data.user);
-        
-        if (data.user && !data.user.email_verified && window.location.pathname !== '/email-verification') {
-          navigate('/email-verification');
-        }
-      } else {
-        localStorage.removeItem('token');
-      }
-    } catch (error) {
-      console.error('Auth check failed:', error);
-      localStorage.removeItem('token');
-    } finally {
-      setIsLoading(false);
-      setIsInitialized(true);
-    }
-  }, [navigate]);
-
-  useEffect(() => {
-    checkAuth();
-  }, [checkAuth]);
-
-  const register = useCallback(async (name: string, email: string, password: string): Promise<RegisterResponse> => {
-    setIsLoading(true);
-    try {
-      const response = await fetch('http://localhost:3001/api/auth/register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ name, email, password }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || 'Registration failed');
-      }
-
-      setUser(data.user);
-      return data;
-    } catch (error) {
-      console.error('Registration error:', error);
-      if (error instanceof Error) {
-        throw error;
-      }
-      throw new Error('An unexpected error occurred during registration');
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-
-  const login = useCallback(async (email: string, password: string): Promise<LoginResponse> => {
-    setIsLoading(true);
-    try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 10000);
-
-      const response = await fetch('http://localhost:3001/api/auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify({ email, password }),
-        signal: controller.signal
-      });
-
-      clearTimeout(timeoutId);
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || 'Login failed');
-      }
-
-      localStorage.setItem('token', data.token);
-      setUser(data.user);
-
-      if (!data.user.email_verified) {
-        navigate('/email-verification');
-      }
-
-      return data;
-    } catch (error) {
-      console.error('Login error:', error);
-      if (error instanceof Error) {
-        throw error;
-      }
-      throw new Error('An unexpected error occurred during login');
-    } finally {
-      setIsLoading(false);
-    }
-  }, [navigate]);
-
-  const loginWithGoogle = useCallback(async () => {
-    try {
-      window.location.href = `${process.env.REACT_APP_API_URL || 'http://localhost:3001'}/api/auth/google`;
-    } catch (error) {
-      console.error('Google login error:', error);
-      throw new Error('Failed to initialize Google login');
-    }
-  }, []);
-
-  const loginWithFacebook = useCallback(async () => {
-    try {
-      window.location.href = `${process.env.REACT_APP_API_URL || 'http://localhost:3001'}/api/auth/facebook`;
-    } catch (error) {
-      console.error('Facebook login error:', error);
-      throw new Error('Failed to initialize Facebook login');
-    }
-  }, []);
-
-  const logout = useCallback(async () => {
-    setIsLoading(true);
-    try {
-      await fetch('http://localhost:3001/api/auth/logout', {
-        method: 'POST',
-        credentials: 'include',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      });
-      setUser(null);
-      localStorage.removeItem('token');
-    } catch (error) {
-      console.error('Logout error:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-
-  if (!isInitialized) {
-    return <div>Loading...</div>;
-  }
-
-  return (
-    <AuthContext.Provider value={{ 
-      user, 
-      isLoading, 
-      register,
-      login, 
-      loginWithGoogle, 
-      loginWithFacebook, 
-      logout 
-    }}>
-      {children}
-    </AuthContext.Provider>
-  );
+interface AuthContextType {
+  isAuthenticated: boolean;
+  user: any;
+  login: (token: string) => void;
+  logout: () => void;
+  loginWithCredentials: (email: string, password: string) => Promise<ApiResponse>;
+  loginWithGoogle: () => Promise<void>;
+  loginWithFacebook: (token: string) => Promise<void>;
+  register: (name: string, email: string, password: string) => Promise<ApiResponse>;
 }
 
-export function useAuth() {
+interface ApiResponse {
+  valid?: boolean;
+  user?: any;
+  token?: string;
+  error?: string;
+}
+
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) {
     throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
-} 
+};
+
+export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      validateToken(token);
+    }
+  }, []);
+
+  const validateToken = async (token: string) => {
+    try {
+      const response = await axios.get<ApiResponse>(`${import.meta.env.VITE_API_URL}/auth/validate`, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+      if (response.data.valid) {
+        setIsAuthenticated(true);
+        setUser(response.data.user);
+      } else {
+        logout();
+      }
+    } catch (error) {
+      logout();
+    }
+  };
+
+  const loginWithCredentials = async (email: string, password: string): Promise<ApiResponse> => {
+    try {
+      const response = await axios.post<ApiResponse>(`${import.meta.env.VITE_API_URL}/auth/login`, {
+        email,
+        password
+      });
+      if (response.data.token) {
+        login(response.data.token);
+        setUser(response.data.user);
+      }
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  };
+
+  const login = (token: string) => {
+    localStorage.setItem('token', token);
+    setIsAuthenticated(true);
+  };
+
+  const loginWithGoogle = async () => {
+    try {
+      const auth2 = window.google?.accounts?.oauth2;
+      if (!auth2) {
+        throw new Error('Google OAuth not loaded');
+      }
+
+      const client = auth2.initTokenClient({
+        client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
+        scope: 'email profile',
+        callback: async (response: any) => {
+          if (response.access_token) {
+            try {
+              const userResponse = await axios.post<ApiResponse>(
+                `${import.meta.env.VITE_API_URL}/auth/google`,
+                { token: response.access_token }
+              );
+              
+              if (userResponse.data.token) {
+                login(userResponse.data.token);
+                setUser(userResponse.data.user);
+              }
+            } catch (error) {
+              console.error('Google login error:', error);
+              throw error;
+            }
+          }
+        },
+      });
+
+      client.requestAccessToken();
+    } catch (error) {
+      console.error('Google auth error:', error);
+      throw error;
+    }
+  };
+
+  const loginWithFacebook = async (token: string) => {
+    try {
+      const response = await axios.post<ApiResponse>(`${import.meta.env.VITE_API_URL}/auth/facebook`, {
+        token
+      });
+      if (response.data.token) {
+        login(response.data.token);
+        setUser(response.data.user);
+      }
+    } catch (error) {
+      throw error;
+    }
+  };
+
+  const logout = () => {
+    localStorage.removeItem('token');
+    setIsAuthenticated(false);
+    setUser(null);
+  };
+
+  const register = async (name: string, email: string, password: string): Promise<ApiResponse> => {
+    try {
+      const response = await axios.post<ApiResponse>(`${import.meta.env.VITE_API_URL}/auth/register`, {
+        name,
+        email,
+        password
+      });
+      if (response.data.token) {
+        login(response.data.token);
+        setUser(response.data.user);
+      }
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  };
+
+  return (
+    <AuthContext.Provider value={{ 
+      isAuthenticated, 
+      user, 
+      login, 
+      logout,
+      loginWithCredentials,
+      loginWithGoogle,
+      loginWithFacebook,
+      register
+    }}>
+      {children}
+    </AuthContext.Provider>
+  );
+}; 

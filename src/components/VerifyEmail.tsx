@@ -1,13 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
 
 export default function VerifyEmail() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
   const { token } = useParams<{ token: string }>();
   const navigate = useNavigate();
-  const { login } = useAuth();
 
   useEffect(() => {
     const verifyEmail = async () => {

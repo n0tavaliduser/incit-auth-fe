@@ -4,6 +4,8 @@ import { useNavigate } from 'react-router-dom';
 import { RegisterFormProps } from '../types/auth';
 import { validatePassword, PasswordValidation, isPasswordValid } from '../utils/passwordValidation';
 
+type SocialLoginFunction = (token: string) => Promise<void>;
+
 export default function RegisterForm({ onSuccess }: RegisterFormProps) {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -56,15 +58,12 @@ export default function RegisterForm({ onSuccess }: RegisterFormProps) {
     }
   };
 
-  const handleSocialLogin = async (socialLoginFn: () => Promise<void>) => {
-    if (isLoading) return;
-    setIsLoading(true);
+  const handleSocialLogin = async (socialLoginFn: SocialLoginFunction) => {
     try {
-      await socialLoginFn();
+      await socialLoginFn('');
+      navigate('/');
     } catch (err) {
       setError('Social login failed. Please try again.');
-    } finally {
-      setIsLoading(false);
     }
   };
 

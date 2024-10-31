@@ -1,15 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 
 export default function EmailVerification() {
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState('');
-  const { user, logout } = useAuth();
+  const { logout } = useAuth();
   const navigate = useNavigate();
 
-  // Fungsi untuk mengecek status verifikasi email
-  const checkEmailVerification = async () => {
+  const checkEmailVerification = useCallback(async () => {
     try {
       const response = await fetch('http://localhost:3001/api/auth/check-verification', {
         headers: {
@@ -27,25 +26,11 @@ export default function EmailVerification() {
     } catch (error) {
       console.error('Error checking verification status:', error);
     }
-  };
+  }, [navigate]);
 
   useEffect(() => {
-    // Debug log
-    console.log('Current user state:', user);
-    
-    // Redirect ke dashboard jika email sudah terverifikasi
-    if (user && user.email_verified === true) {
-      console.log('Email verified, redirecting to dashboard');
-      navigate('/');
-      return;
-    }
-
-    // Set interval untuk mengecek status verifikasi setiap 10 detik
-    const intervalId = setInterval(checkEmailVerification, 10000);
-
-    // Cleanup interval ketika component unmount
-    return () => clearInterval(intervalId);
-  }, [user, navigate]);
+    checkEmailVerification();
+  }, [checkEmailVerification]);
 
   const handleResendVerification = async () => {
     setIsLoading(true);

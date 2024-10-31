@@ -3,13 +3,15 @@ import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { LoginFormProps } from '../types/auth';
 
+type SocialLoginFunction = (token: string) => Promise<void>;
+
 export function LoginForm({ onSuccess }: LoginFormProps) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const { login, loginWithGoogle, loginWithFacebook } = useAuth();
+  const { loginWithCredentials, loginWithGoogle, loginWithFacebook } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -32,9 +34,8 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
       setIsLoading(true);
       setError('');
       
-      const response = await login(email, password);
+      const response = await loginWithCredentials(email, password);
       if (response?.token) {
-        localStorage.setItem('token', response.token);
         navigate('/');
       }
     } catch (err) {
@@ -49,11 +50,13 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
     }
   };
 
-  const handleSocialLogin = async (socialLogin: () => Promise<void>) => {
+  const handleSocialLogin = async (socialLoginFn: SocialLoginFunction) => {
     if (isLoading) return;
     setIsLoading(true);
     try {
-      await socialLogin();
+      console.log('Initiating social login...');
+      await socialLoginFn(''); // Pass empty string as token since it will be handled by the provider
+      console.log('Social login successful');
       navigate('/');
     } catch (err) {
       console.error('Social login error:', err);
@@ -170,9 +173,12 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
             </div>
 
             <div className="text-sm">
-              <a href="#" className="font-medium text-gray-400 hover:text-white">
+              <button 
+                onClick={() => {/* handle forgot password */}} 
+                className="font-medium text-gray-400 hover:text-white bg-transparent border-none p-0"
+              >
                 Forgot your password?
-              </a>
+              </button>
             </div>
           </div>
 
