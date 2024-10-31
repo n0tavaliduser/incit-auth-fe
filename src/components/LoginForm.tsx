@@ -18,25 +18,13 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Initialize Facebook SDK
-    window.fbAsyncInit = function() {
-      window.FB?.init({
-        appId: import.meta.env.VITE_FACEBOOK_APP_ID,
-        cookie: true,
-        xfbml: true,
-        version: 'v18.0'
-      });
-    };
-
-    // Load Facebook SDK
-    (function(d, s, id) {
-      var js, fjs = d.getElementsByTagName(s)[0];
-      if (d.getElementById(id)) return;
-      js = d.createElement(s) as HTMLScriptElement;
-      js.id = id;
-      js.src = "https://connect.facebook.net/en_US/sdk.js";
-      fjs.parentNode?.insertBefore(js, fjs);
-    }(document, 'script', 'facebook-jssdk'));
+    // Check if redirected from register with facebook login trigger
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('auth') === 'facebook') {
+      handleFacebookLogin();
+      // Clean up URL
+      window.history.replaceState({}, '', '/login');
+    }
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -292,9 +280,18 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
               type="button"
               onClick={handleFacebookLogin}
               disabled={isLoading}
-              className="w-full flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
+              className={`group relative w-full flex justify-center py-3 px-4 border border-gray-700 
+              text-sm font-medium rounded-lg text-gray-300 bg-transparent 
+              ${isLoading ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-800'} 
+              focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 
+              transition-all duration-200 ease-in-out`}
             >
-              Continue with Facebook
+              <span className="absolute left-0 inset-y-0 flex items-center pl-3">
+                <svg className="h-5 w-5 text-gray-600 group-hover:text-gray-400" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+                </svg>
+              </span>
+              {isLoading ? 'Connecting...' : 'Continue with Facebook'}
             </button>
           </div>
         </form>
