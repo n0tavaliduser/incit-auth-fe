@@ -12,6 +12,7 @@ interface LoginFormProps {
 export function LoginForm({ onSuccess }: LoginFormProps) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [provider, setProvider] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -41,7 +42,8 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
       
       const response = await api.post<AuthResponse>('/auth/login', {
         email,
-        password
+        password,
+        provider,
       });
       
       if (response.data.token) {
@@ -50,7 +52,7 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
       }
     } catch (err) {
       console.error('Login error:', err);
-      setError('Invalid email or password');
+      setError(err.response?.data?.error || 'Invalid email or password');
     } finally {
       setIsLoading(false);
     }
@@ -238,6 +240,7 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
             <button
               type="submit"
               disabled={isLoading}
+              onClick={() => setProvider('local')}
               className="group relative w-full flex justify-center py-2 px-4 
               border border-transparent text-sm font-medium rounded-lg 
               text-white bg-purple-600 hover:bg-purple-700 
