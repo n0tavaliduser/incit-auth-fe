@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import axios from 'axios';
+import Cookies from 'js-cookie';
 import { User, AuthResponse } from '../types/auth';
+import api from '../utils/api';
 
 interface AuthContextType {
   isAuthenticated: boolean;
@@ -8,8 +9,6 @@ interface AuthContextType {
   login: (data: AuthResponse) => void;
   logout: () => void;
   loginWithGoogle: () => Promise<void>;
-  loginWithFacebook: () => Promise<void>;
-  register: (name: string, email: string, password: string) => Promise<AuthResponse>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -25,36 +24,77 @@ export const useAuth = () => {
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [user, setUser] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
+  // Check for existing session on mount
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      validateToken(token);
-    }
+    const initializeAuth = async () => {
+      const token = Cookies.get('token');
+      const savedUser = Cookies.get('user');
+
+      if (token && savedUser) {
+        try {
+          // Set initial state from cookies
+          const parsedUser = JSON.parse(savedUser);
+          setUser(parsedUser);
+          setIsAuthenticated(true);
+          
+          // Set axios default authorization header
+          api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+          
+          // Validate token with backend
+          await validateToken();
+        } catch (error) {
+          console.error('Auth initialization error:', error);
+          clearSession();
+        }
+      }
+      setIsLoading(false);
+    };
+
+    initializeAuth();
   }, []);
 
-  const validateToken = async (token: string) => {
+  const validateToken = async () => {
     try {
-      const response = await axios.get<AuthResponse>(`${import.meta.env.VITE_API_URL}/auth/validate`, {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      });
-      if (response.data.token) {
-        setIsAuthenticated(true);
-        setUser(response.data.user);
-      } else {
-        logout();
+      const response = await api.get<{ valid: boolean; user: User }>('/auth/validate');
+      if (!response.data.valid) {
+        clearSession();
       }
     } catch (error) {
-      logout();
+      console.error('Token validation error:', error);
+      clearSession();
     }
   };
 
   const login = (data: AuthResponse) => {
-    localStorage.setItem('token', data.token);
+    // Save to cookies with 7 days expiry
+    Cookies.set('token', data.token, { expires: 7, path: '/' });
+    Cookies.set('user', JSON.stringify(data.user), { expires: 7, path: '/' });
+    
+    // Update state
     setIsAuthenticated(true);
     setUser(data.user);
+    
+    // Update axios default headers
+    api.defaults.headers.common['Authorization'] = `Bearer ${data.token}`;
+  };
+
+  const clearSession = () => {
+    // Clear cookies
+    Cookies.remove('token', { path: '/' });
+    Cookies.remove('user', { path: '/' });
+    
+    // Clear state
+    setIsAuthenticated(false);
+    setUser(null);
+    
+    // Clear axios headers
+    delete api.defaults.headers.common['Authorization'];
+  };
+
+  const logout = () => {
+    clearSession();
   };
 
   const loginWithGoogle = async () => {
@@ -70,10 +110,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         callback: async (response: any) => {
           if (response.access_token) {
             try {
-              const userResponse = await axios.post<AuthResponse>(
-                `${import.meta.env.VITE_API_URL}/auth/google`,
-                { token: response.access_token }
-              );
+              const userResponse = await api.post<AuthResponse>('/auth/google', { token: response.access_token });
               
               if (userResponse.data.token) {
                 login(userResponse.data);
@@ -93,15 +130,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const logout = () => {
-    localStorage.removeItem('token');
-    setIsAuthenticated(false);
-    setUser(null);
-  };
-
   const register = async (name: string, email: string, password: string): Promise<AuthResponse> => {
     try {
-      const response = await axios.post<AuthResponse>(`${import.meta.env.VITE_API_URL}/auth/register`, {
+      const response = await api.post<AuthResponse>('/auth/register', {
         name,
         email,
         password
@@ -129,10 +160,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       window.FB.login(async (response) => {
         if (response.authResponse) {
           try {
-            const authResponse = await axios.post<AuthResponse>(
-              `${import.meta.env.VITE_API_URL}/auth/facebook`,
-              { token: response.authResponse.accessToken }
-            );
+            const authResponse = await api.post<AuthResponse>('/auth/facebook', { token: response.authResponse.accessToken });
             
             if (authResponse.data.token) {
               login(authResponse.data);
@@ -151,15 +179,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     });
   };
 
+  if (isLoading) {
+    return <div>Loading...</div>; // Or your loading component
+  }
+
   return (
     <AuthContext.Provider value={{ 
       isAuthenticated, 
       user, 
       login, 
       logout,
-      loginWithGoogle,
-      loginWithFacebook,
-      register
+      loginWithGoogle
     }}>
       {children}
     </AuthContext.Provider>
