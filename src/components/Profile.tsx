@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import api from '../utils/api';
+import Dashboard from './Dashboard';
 
 interface ProfileData {
   user: {
@@ -60,113 +61,116 @@ export default function Profile() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="bg-gray-800/50 backdrop-blur-sm rounded-lg shadow-xl p-6 md:p-8">
-          {/* Header */}
-          <div className="flex justify-between items-center mb-8">
-            <h1 className="text-2xl font-bold text-white">Profile Settings</h1>
-            <button
-              onClick={() => navigate('/')}
-              className="text-gray-400 hover:text-white transition-colors duration-200"
-            >
-              <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-          </div>
-
-          {/* Profile Form */}
-          <div className="space-y-6">
-            {/* Name Field */}
-            <div>
-              <label className="block text-sm font-medium text-gray-400 mb-2">Name</label>
-              <div className="flex items-center space-x-3">
-                {isEditing ? (
-                  <input
-                    type="text"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    className="bg-gray-700 text-white rounded-lg px-4 py-2 w-full 
-                    focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                    placeholder="Enter your name"
-                    disabled={isLoading}
-                  />
-                ) : (
-                  <span className="text-white">{name}</span>
-                )}
-                {!isEditing ? (
+    <Dashboard>
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+        <div className="px-6 py-4 border-b border-gray-200">
+          <h2 className="text-lg font-medium text-gray-900">Profile Settings</h2>
+        </div>
+        
+        <div className="p-6 space-y-6">
+          {/* Name Field */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Name</label>
+            <div className="flex items-center space-x-3">
+              {isEditing ? (
+                <input
+                  type="text"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  className="block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm text-sm focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent"
+                  placeholder="Enter your name"
+                  disabled={isLoading}
+                />
+              ) : (
+                <span className="text-gray-900">{name}</span>
+              )}
+              {!isEditing ? (
+                <button
+                  onClick={() => setIsEditing(true)}
+                  className="text-gray-400 hover:text-gray-600 transition-colors"
+                >
+                  <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
+                      d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                  </svg>
+                </button>
+              ) : (
+                <div className="flex space-x-2">
                   <button
-                    onClick={() => setIsEditing(true)}
-                    className="text-gray-400 hover:text-white transition-colors duration-200"
+                    onClick={handleUpdateName}
+                    disabled={isLoading}
+                    className="text-green-600 hover:text-green-700 transition-colors"
                   >
                     <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
-                        d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                        d="M5 13l4 4L19 7" />
                     </svg>
                   </button>
-                ) : (
-                  <div className="flex space-x-2">
-                    <button
-                      onClick={handleUpdateName}
-                      disabled={isLoading}
-                      className="text-green-500 hover:text-green-400 transition-colors duration-200"
-                    >
-                      <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
-                          d="M5 13l4 4L19 7" />
-                      </svg>
-                    </button>
-                    <button
-                      onClick={() => {
-                        setIsEditing(false);
-                        setName(authUser?.name || '');
-                      }}
-                      className="text-red-500 hover:text-red-400 transition-colors duration-200"
-                    >
-                      <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
-                          d="M6 18L18 6M6 6l12 12" />
-                      </svg>
-                    </button>
-                  </div>
-                )}
-              </div>
+                  <button
+                    onClick={() => {
+                      setIsEditing(false);
+                      setName(authUser?.name || '');
+                    }}
+                    className="text-red-600 hover:text-red-700 transition-colors"
+                  >
+                    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
+                        d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+              )}
             </div>
-
-            {/* Email Field (Read-only) */}
-            <div>
-              <label className="block text-sm font-medium text-gray-400 mb-2">Email</label>
-              <div className="flex items-center space-x-3">
-                <span className="text-white">{authUser?.email}</span>
-                {authUser?.email_verified ? (
-                  <span className="text-green-500 text-sm">Verified</span>
-                ) : (
-                  <span className="text-yellow-500 text-sm">Not Verified</span>
-                )}
-              </div>
-            </div>
-
-            {/* Provider Info */}
-            <div>
-              <label className="block text-sm font-medium text-gray-400 mb-2">Login Method</label>
-              <span className="text-white capitalize">{authUser?.provider || 'Email'}</span>
-            </div>
-
-            {/* Status Messages */}
-            {error && (
-              <div className="bg-red-500/10 border border-red-500 text-red-400 px-4 py-3 rounded">
-                {error}
-              </div>
-            )}
-            {success && (
-              <div className="bg-green-500/10 border border-green-500 text-green-400 px-4 py-3 rounded">
-                {success}
-              </div>
-            )}
           </div>
+
+          {/* Email Field */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
+            <div className="flex items-center space-x-3">
+              <span className="text-gray-900">{authUser?.email}</span>
+              {authUser?.email_verified ? (
+                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                  Verified
+                </span>
+              ) : (
+                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                  Not Verified
+                </span>
+              )}
+            </div>
+          </div>
+
+          {/* Provider Info */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Login Method</label>
+            <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-800 capitalize">
+              {authUser?.provider || 'Email'}
+            </span>
+          </div>
+
+          {/* Status Messages */}
+          {error && (
+            <div className="bg-white border-l-4 border-red-500 p-4 shadow-sm">
+              <div className="flex items-center">
+                <svg className="w-5 h-5 text-red-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                </svg>
+                <span className="text-gray-600">{error}</span>
+              </div>
+            </div>
+          )}
+          {success && (
+            <div className="bg-white border-l-4 border-green-500 p-4 shadow-sm">
+              <div className="flex items-center">
+                <svg className="w-5 h-5 text-green-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                </svg>
+                <span className="text-gray-600">{success}</span>
+              </div>
+            </div>
+          )}
         </div>
       </div>
-    </div>
+    </Dashboard>
   );
 } 

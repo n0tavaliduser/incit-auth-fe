@@ -10,7 +10,6 @@ export default function VerifyEmail() {
   const navigate = useNavigate();
   const { login } = useAuth();
 
-  // Handle email verification and start countdown immediately
   useEffect(() => {
     const verifyEmail = async () => {
       try {
@@ -18,9 +17,10 @@ export default function VerifyEmail() {
           `/auth/verify-email/${token}`
         );
 
-        console.log('Verification response:', response.data);
+        if (response.data.token) {
+          login(response.data);
+        }
 
-        // Start countdown after successful verification
         const timer = setInterval(() => {
           setCountdown((prev) => {
             if (prev <= 1) {
@@ -31,11 +31,6 @@ export default function VerifyEmail() {
             return prev - 1;
           });
         }, 1000);
-
-        // Update auth context with new token if available
-        if (response.data.token) {
-          login(response.data);
-        }
 
         return () => clearInterval(timer);
       } catch (err) {
@@ -49,17 +44,29 @@ export default function VerifyEmail() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black flex items-center justify-center">
-        <div className="max-w-md w-full space-y-8 bg-white/10 backdrop-blur-lg p-8 rounded-2xl shadow-2xl">
-          <div className="text-center text-red-400">
-            <h2 className="text-xl font-bold mb-2">Verification Failed</h2>
-            <p>{error}</p>
-            <button
-              onClick={() => navigate('/login')}
-              className="mt-4 px-4 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-700 transition-colors"
-            >
-              Back to Login
-            </button>
+      <div className="min-h-screen flex items-center justify-center bg-gray-100">
+        <div className="max-w-md w-full m-4">
+          <div className="bg-white rounded-lg shadow-lg border border-gray-200 overflow-hidden">
+            <div className="p-8">
+              <div className="text-center">
+                <div className="mx-auto w-16 h-16 mb-4">
+                  <svg className="w-full h-full text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
+                      d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <h2 className="text-2xl font-bold text-gray-900 mb-2">
+                  Verification Failed
+                </h2>
+                <p className="text-gray-600 mb-6">{error}</p>
+                <button
+                  onClick={() => navigate('/login')}
+                  className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-gray-900 hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+                >
+                  Back to Login
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -67,33 +74,35 @@ export default function VerifyEmail() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black flex items-center justify-center">
-      <div className="max-w-md w-full space-y-8 bg-white/10 backdrop-blur-lg p-8 rounded-2xl shadow-2xl">
-        <div className="text-center space-y-4">
-          <div className="flex items-center justify-center mb-4">
-            <svg className="h-16 w-16 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
+    <div className="min-h-screen flex items-center justify-center bg-gray-100">
+      <div className="max-w-md w-full m-4">
+        <div className="bg-white rounded-lg shadow-lg border border-gray-200 overflow-hidden">
+          <div className="p-8">
+            <div className="text-center">
+              <div className="mx-auto w-16 h-16 mb-4">
+                <svg className="w-full h-full text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
+                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">
+                Email Verified Successfully!
+              </h2>
+              <p className="text-gray-600 mb-6">
+                Redirecting to dashboard in{' '}
+                <span className="inline-flex items-center justify-center w-8 h-8 bg-gray-100 rounded-full text-gray-900 font-bold">
+                  {countdown}
+                </span>{' '}
+                seconds...
+              </p>
+              <button
+                onClick={() => navigate('/')}
+                className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-gray-900 hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+              >
+                Go to Dashboard Now
+              </button>
+            </div>
           </div>
-          <h2 className="text-2xl font-bold text-white mb-2">
-            Email Verified Successfully!
-          </h2>
-          <p className="text-gray-400">
-            Redirecting to dashboard in{' '}
-            <span className="text-white font-bold text-xl inline-block w-6 h-6 leading-6 animate-pulse">
-              {countdown}
-            </span>{' '}
-            seconds...
-          </p>
-          <button
-            onClick={() => navigate('/')}
-            className="mt-4 w-full py-3 px-4 border border-transparent rounded-lg 
-            text-sm font-medium text-white bg-gray-800 hover:bg-gray-700 
-            focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 
-            transition-all duration-200 ease-in-out"
-          >
-            If not redirected automatically, click here
-          </button>
         </div>
       </div>
     </div>
