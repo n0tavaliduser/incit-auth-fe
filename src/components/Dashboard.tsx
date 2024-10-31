@@ -132,6 +132,7 @@ export default function Dashboard() {
                   <button
                     onClick={() => {
                       setShowDropdown(false);
+                      navigate('/change-password');
                     }}
                     className="group flex items-center w-full px-4 py-2 text-sm text-gray-300 
                     hover:bg-gray-700/50 transition-colors duration-150"

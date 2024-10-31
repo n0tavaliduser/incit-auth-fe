@@ -9,6 +9,7 @@ import VerifyEmail from './components/VerifyEmail';
 import EmailVerification from './components/EmailVerification';
 import Dashboard from './components/Dashboard';
 import Profile from './components/Profile';
+import ChangePassword from './components/ChangePassword';
 
 function App() {
   return (
@@ -52,6 +53,14 @@ function App() {
             element={
               <PrivateRoute>
                 <Profile />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/change-password"
+            element={
+              <PrivateRoute>
+                <ChangePassword />
               </PrivateRoute>
             }
           />
