@@ -8,6 +8,8 @@ interface AuthContextType {
   login: (data: AuthResponse) => void;
   logout: () => void;
   loginWithGoogle: () => Promise<void>;
+  loginWithFacebook: () => Promise<void>;
+  register: (name: string, email: string, password: string) => Promise<AuthResponse>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -97,13 +99,67 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setUser(null);
   };
 
+  const register = async (name: string, email: string, password: string): Promise<AuthResponse> => {
+    try {
+      const response = await axios.post<AuthResponse>(`${import.meta.env.VITE_API_URL}/auth/register`, {
+        name,
+        email,
+        password
+      });
+      
+      if (response.data.token) {
+        login(response.data);
+      }
+      return response.data;
+    } catch (error) {
+      console.error('Registration error:', error);
+      throw error;
+    }
+  };
+
+  const loginWithFacebook = async () => {
+    return new Promise<void>((resolve, reject) => {
+      // Check if FB SDK is loaded
+      if (typeof window.FB === 'undefined') {
+        console.error('Facebook SDK not loaded');
+        reject(new Error('Facebook SDK not loaded. Please try again.'));
+        return;
+      }
+
+      window.FB.login(async (response) => {
+        if (response.authResponse) {
+          try {
+            const authResponse = await axios.post<AuthResponse>(
+              `${import.meta.env.VITE_API_URL}/auth/facebook`,
+              { token: response.authResponse.accessToken }
+            );
+            
+            if (authResponse.data.token) {
+              login(authResponse.data);
+              resolve();
+            } else {
+              reject(new Error('Failed to get authentication token'));
+            }
+          } catch (error) {
+            console.error('Facebook login error:', error);
+            reject(error);
+          }
+        } else {
+          reject(new Error('Facebook login cancelled'));
+        }
+      }, { scope: 'email,public_profile' });
+    });
+  };
+
   return (
     <AuthContext.Provider value={{ 
       isAuthenticated, 
       user, 
       login, 
       logout,
-      loginWithGoogle
+      loginWithGoogle,
+      loginWithFacebook,
+      register
     }}>
       {children}
     </AuthContext.Provider>

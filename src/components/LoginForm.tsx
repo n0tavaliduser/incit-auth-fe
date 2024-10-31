@@ -3,6 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import api from '../utils/api';
 import { AuthResponse } from '../types/auth';
+import { useFacebookSDK } from '../utils/FacebookSDK';
 
 interface LoginFormProps {
   onSuccess?: () => void;
@@ -16,6 +17,9 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
   const [showPassword, setShowPassword] = useState(false);
   const { login, loginWithGoogle } = useAuth();
   const navigate = useNavigate();
+
+  // Initialize Facebook SDK
+  useFacebookSDK();
 
   useEffect(() => {
     // Check if redirected from register with facebook login trigger
