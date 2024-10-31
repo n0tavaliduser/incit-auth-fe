@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import EmailVerification from './EmailVerification';
+import api from '../utils/api';
 
 interface DashboardData {
   name: string;
@@ -19,22 +20,20 @@ export default function Dashboard() {
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
-        // Only fetch dashboard data if user is verified or using OAuth
-        console.log(user);
-        if (user && (user.email_verified || user.provider === 'google' || user.provider === 'facebook')) {
-          const response = await fetch('http://localhost:3001/api/dashboard', {
-            headers: {
-              'Authorization': `Bearer ${localStorage.getItem('token')}`,
-            },
-            credentials: 'include'
-          });
+        // Cek apakah user perlu verifikasi
+        const needsVerification = user && 
+          !user.email_verified && 
+          user.provider === 'local';
 
-          if (!response.ok) {
-            throw new Error('Failed to fetch dashboard data');
-          }
+        if (needsVerification) {
+          setIsLoading(false);
+          return;
+        }
 
-          const data = await response.json();
-          setDashboardData(data);
+        // Fetch dashboard data jika user sudah terverifikasi atau menggunakan OAuth
+        if (user) {
+          const response = await api.get<DashboardData>('/dashboard');
+          setDashboardData(response.data);
         }
       } catch (err) {
         setError('Error loading dashboard data');
@@ -66,7 +65,7 @@ export default function Dashboard() {
   }
 
   // Show email verification screen if needed
-  if (user && !user.email_verified && !user.oauth_provider) {
+  if (user && !user.email_verified && user.provider === 'local') {
     return <EmailVerification />;
   }
 
