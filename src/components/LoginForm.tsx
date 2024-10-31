@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import api from '../utils/api';
 import { AuthResponse } from '../types/auth';
 import { useFacebookSDK } from '../utils/FacebookSDK';
@@ -219,12 +219,12 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
             </div>
 
             <div className="text-sm">
-              <button 
-                onClick={() => {/* handle forgot password */}} 
-                className="font-medium text-gray-400 hover:text-white bg-transparent border-none p-0"
+              <Link
+                to="/forgot-password"
+                className="font-medium text-indigo-400 hover:text-indigo-300 transition-colors duration-200"
               >
                 Forgot your password?
-              </button>
+              </Link>
             </div>
           </div>
 

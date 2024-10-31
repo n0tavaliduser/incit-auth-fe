@@ -10,6 +10,8 @@ import EmailVerification from './components/EmailVerification';
 import Dashboard from './components/Dashboard';
 import Profile from './components/Profile';
 import ChangePassword from './components/ChangePassword';
+import ForgotPassword from './components/ForgotPassword';
+import ResetPassword from './components/ResetPassword';
 
 function App() {
   return (
@@ -64,6 +66,11 @@ function App() {
               </PrivateRoute>
             }
           />
+          <Route
+            path="/forgot-password"
+            element={<ForgotPassword />}
+          />
+          <Route path="/reset-password/:token" element={<ResetPassword />} />
         </Routes>
       </Router>
     </AuthProvider>
