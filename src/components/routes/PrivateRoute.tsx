@@ -7,10 +7,15 @@ interface PrivateRouteProps {
 }
 
 const PrivateRoute: React.FC<PrivateRouteProps> = ({ children }) => {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
 
   if (!isAuthenticated) {
     return <Navigate to="/login" />;
+  }
+
+  // Check if user needs email verification
+  if (user && !user.email_verified && user.provider === 'local') {
+    return <Navigate to="/email-verification" />;
   }
 
   return <>{children}</>;

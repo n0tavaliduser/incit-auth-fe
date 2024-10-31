@@ -5,8 +5,6 @@ import { RegisterFormProps } from '../types/auth';
 import { validatePassword, PasswordValidation, isPasswordValid } from '../utils/passwordValidation';
 import { useFacebookSDK } from '../utils/FacebookSDK';
 
-type SocialLoginFunction = (token: string) => Promise<void>;
-
 export default function RegisterForm({ onSuccess }: RegisterFormProps) {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');

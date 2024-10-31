@@ -9,6 +9,8 @@ interface AuthContextType {
   login: (data: AuthResponse) => void;
   logout: () => void;
   loginWithGoogle: () => Promise<void>;
+  loginWithFacebook: () => Promise<void>;
+  register: (name: string, email: string, password: string) => Promise<AuthResponse>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -189,9 +191,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       user, 
       login, 
       logout,
-      loginWithGoogle
+      loginWithGoogle,
+      loginWithFacebook,
+      register
     }}>
-      {children}
+      {!isLoading && children}
     </AuthContext.Provider>
   );
 }; 
