@@ -50,7 +50,7 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
         login(response.data);  // Pass the entire response
         navigate('/');
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Login error:', err);
       setError(err.response?.data?.error || 'Invalid email or password');
     } finally {
