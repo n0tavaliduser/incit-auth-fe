@@ -70,16 +70,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const login = (data: AuthResponse) => {
-    // Save to cookies with 7 days expiry
     Cookies.set('token', data.token, { expires: 7, path: '/' });
     Cookies.set('user', JSON.stringify(data.user), { expires: 7, path: '/' });
     
-    // Update state
+    // Set token in axios headers
+    api.defaults.headers.common['Authorization'] = `Bearer ${data.token}`;
+    
     setIsAuthenticated(true);
     setUser(data.user);
-    
-    // Update axios default headers
-    api.defaults.headers.common['Authorization'] = `Bearer ${data.token}`;
   };
 
   const clearSession = () => {
@@ -95,8 +93,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     delete api.defaults.headers.common['Authorization'];
   };
 
-  const logout = () => {
-    clearSession();
+  const logout = async () => {
+    try {
+      const token = Cookies.get('token');
+      if (!token) {
+        clearSession();
+        return;
+      }
+
+      // Ensure token is in headers for logout request
+      api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+      await api.post('/auth/logout');
+    } catch (error) {
+      console.error('Logout error:', error);
+    } finally {
+      clearSession();
+    }
   };
 
   const loginWithGoogle = async () => {

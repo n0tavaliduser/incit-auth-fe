@@ -12,6 +12,7 @@ import Profile from './components/Profile';
 import ChangePassword from './components/ChangePassword';
 import ForgotPassword from './components/ForgotPassword';
 import ResetPassword from './components/ResetPassword';
+import UserLogs from './components/UserLogs';
 
 function App() {
   return (
@@ -71,6 +72,14 @@ function App() {
             element={<ForgotPassword />}
           />
           <Route path="/reset-password/:token" element={<ResetPassword />} />
+          <Route
+            path="/user-logs"
+            element={
+              <PrivateRoute>
+                <UserLogs />
+              </PrivateRoute>
+            }
+          />
         </Routes>
       </Router>
     </AuthProvider>
