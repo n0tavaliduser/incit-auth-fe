@@ -20,7 +20,8 @@ export default function Dashboard() {
     const fetchDashboardData = async () => {
       try {
         // Only fetch dashboard data if user is verified or using OAuth
-        if (user && (user.email_verified || user.oauth_provider)) {
+        console.log(user);
+        if (user && (user.email_verified || user.provider === 'google' || user.provider === 'facebook')) {
           const response = await fetch('http://localhost:3001/api/dashboard', {
             headers: {
               'Authorization': `Bearer ${localStorage.getItem('token')}`,
