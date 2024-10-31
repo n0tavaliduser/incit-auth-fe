@@ -32,13 +32,15 @@ export default function ForgotPassword() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 via-gray-800 to-black">
-      <div className="max-w-md w-full space-y-8 bg-white/10 backdrop-blur-lg p-8 rounded-2xl shadow-2xl">
+    <div className="min-h-screen flex items-center justify-center 
+    bg-gradient-to-br from-gray-900 via-purple-800/10 to-black">
+      <div className="max-w-md w-full space-y-8 bg-gray-900/80 backdrop-blur-lg p-8 
+      rounded-2xl shadow-2xl border border-purple-500/20">
         <div>
           <h2 className="mt-6 text-center text-3xl font-extrabold text-white">
             Reset your password
           </h2>
-          <p className="mt-2 text-center text-sm text-gray-400">
+          <p className="mt-2 text-center text-sm text-gray-300">
             Enter your email address and we'll send you a link to reset your password
           </p>
         </div>
@@ -54,9 +56,10 @@ export default function ForgotPassword() {
               type="email"
               required
               className="appearance-none relative block w-full px-3 py-2 border 
-              border-gray-700 rounded-lg bg-gray-800 text-gray-300 
-              placeholder-gray-500 focus:outline-none focus:ring-indigo-500 
-              focus:border-indigo-500 focus:z-10 sm:text-sm"
+              border-gray-700 rounded-lg bg-gray-800 text-white 
+              placeholder-gray-400 focus:outline-none focus:ring-2 
+              focus:ring-purple-500/50 focus:border-purple-500/50 
+              focus:z-10 sm:text-sm transition-all duration-200"
               placeholder="Email address"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
