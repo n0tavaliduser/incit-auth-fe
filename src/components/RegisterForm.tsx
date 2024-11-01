@@ -52,9 +52,9 @@ export default function RegisterForm({ onSuccess }: RegisterFormProps) {
         localStorage.setItem('token', response.token);
         navigate('/');
       }
-    } catch (err) {
-      console.error('Registration error:', err);
-      setError(err instanceof Error ? err.message : 'Registration failed. Please try again.');
+    } catch (err: any) {
+      console.error('Registration error:', err.response.data);
+      setError(err?.response?.data?.error || 'Registration failed. Please try again.');
     } finally {
       setIsLoading(false);
     }
