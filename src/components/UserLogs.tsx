@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import api from '../utils/api';
 import Dashboard from './Dashboard';
+import { useAuth } from '../context/AuthContext';
 
 interface UserLog {
   id: number;
@@ -19,6 +20,7 @@ interface UserStats {
 }
 
 export default function UserLogs() {
+  const { user: currentUser } = useAuth();
   const [users, setUsers] = useState<UserLog[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
@@ -52,6 +54,19 @@ export default function UserLogs() {
 
     fetchStats();
   }, []);
+
+  const maskEmail = (email: string, isCurrentUser: boolean) => {
+    if (isCurrentUser) return email;
+
+    const [username, domain] = email.split('@');
+    const [domainName, ext] = domain.split('.');
+    
+    const randomLength = Math.floor(Math.random() * 4) + 5;
+    const maskedUsername = '•'.repeat(randomLength);
+    const maskedDomain = '•'.repeat(Math.min(domainName.length, 5));
+
+    return `${maskedUsername}@${maskedDomain}.${ext}`;
+  };
 
   return (
     <Dashboard>
@@ -153,7 +168,14 @@ export default function UserLogs() {
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div>
                           <div className="text-sm font-medium text-gray-900">{user.name}</div>
-                          <div className="text-sm text-gray-500">{user.email}</div>
+                          <div className="text-sm text-gray-500 font-mono">
+                            {maskEmail(user.email, user.email === currentUser?.email)}
+                            {user.email === currentUser?.email && (
+                              <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800">
+                                You
+                              </span>
+                            )}
+                          </div>
                           <div className="text-xs text-gray-400">{user.provider}</div>
                         </div>
                       </td>
