@@ -103,7 +103,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       // Ensure token is in headers for logout request
       api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-      await api.post('/auth/logout');
+      await api.post('/auth/logout', { userId: user?.id });
     } catch (error) {
       console.error('Logout error:', error);
     } finally {
