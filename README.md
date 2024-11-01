@@ -14,6 +14,7 @@ Aplikasi autentikasi frontend yang dibangun menggunakan React, TypeScript, dan V
 
 ## Struktur Folder 
 
+```
 incit-auth-fe/
 ├── public/
 ├── src/
@@ -31,6 +32,7 @@ incit-auth-fe/
 ├── tsconfig.json
 ├── vite.config.ts
 └── tailwind.config.js
+```
 
 ## Cara Kerja Komponen Utama
 
